@@ -22,7 +22,7 @@
 ### Building from Source
 
 ```bash
-git clone https://github.com/ture/si.git
+git clone https://github.com/Turee/si.git
 cd si
 go build -o bin/si cmd/si/main.go
 ```

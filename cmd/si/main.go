@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Turee/si/pkg/config"
+	"github.com/Turee/si/pkg/llm"
 	"github.com/alecthomas/kong"
-	"github.com/ture/si/pkg/config"
-	"github.com/ture/si/pkg/llm"
 )
 
 // CLI represents the command line interface

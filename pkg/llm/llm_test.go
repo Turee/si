@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Turee/si/pkg/config"
 	"github.com/stretchr/testify/assert"
-	"github.com/ture/si/pkg/config"
 )
 
 // TestNewProvider tests the NewProvider function

@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ture/si/pkg/config"
+	"github.com/Turee/si/pkg/config"
 )
 
 // ErrNotImplemented is returned when a feature is not yet implemented

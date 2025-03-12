@@ -1,4 +1,4 @@
-module github.com/ture/si
+module github.com/Turee/si
 
 go 1.23.3
 
