@@ -1,0 +1,136 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.23"
+          cache: true
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build -v ./cmd/si
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "lts/*"
+
+      - name: Install semantic-release and plugins
+        run: |
+          npm install -g semantic-release
+          npm install -g @semantic-release/changelog
+          npm install -g @semantic-release/git
+          npm install -g @semantic-release/github
+          npm install -g @semantic-release/exec
+
+      - name: Create .releaserc.json
+        run: |
+          cat > .releaserc.json << 'EOF'
+          {
+            "branches": ["main"],
+            "plugins": [
+              "@semantic-release/commit-analyzer",
+              "@semantic-release/release-notes-generator",
+              "@semantic-release/changelog",
+              ["@semantic-release/exec", {
+                "prepareCmd": "VERSION=${nextRelease.version} ./scripts/prepare-release.sh",
+                "publishCmd": "VERSION=${nextRelease.version} ./scripts/publish-release.sh"
+              }],
+              ["@semantic-release/git", {
+                "assets": ["CHANGELOG.md", "go.mod", "go.sum"],
+                "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+              }],
+              ["@semantic-release/github", {
+                "assets": [
+                  {"path": "bin/si_v*_linux_amd64", "label": "Linux binary (amd64)"},
+                  {"path": "bin/si_v*_darwin_amd64", "label": "macOS binary (amd64)"},
+                  {"path": "bin/si_v*_darwin_arm64", "label": "macOS binary (arm64)"},
+                  {"path": "bin/si_v*_windows_amd64.exe", "label": "Windows binary (amd64)"}
+                ]
+              }]
+            ]
+          }
+          EOF
+
+      - name: Create release scripts directory
+        run: mkdir -p scripts
+
+      - name: Create prepare-release script
+        run: |
+          cat > scripts/prepare-release.sh << 'EOF'
+          #!/bin/bash
+          set -e
+
+          # Set version in code
+          echo "Preparing release version: $VERSION"
+
+          # Update version in version.go
+          sed -i "s/Version = \"dev\"/Version = \"$VERSION\"/" pkg/version/version.go
+
+          # Update commit SHA
+          COMMIT=$(git rev-parse HEAD)
+          sed -i "s/Commit = \"unknown\"/Commit = \"$COMMIT\"/" pkg/version/version.go
+
+          # Update build date
+          BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          sed -i "s/BuildDate = \"unknown\"/BuildDate = \"$BUILD_DATE\"/" pkg/version/version.go
+
+          # Build binaries for different platforms
+          echo "Building binaries..."
+          mkdir -p bin
+
+          # Linux amd64
+          GOOS=linux GOARCH=amd64 go build -ldflags="-X 'github.com/Turee/si/pkg/version.Version=$VERSION' -X 'github.com/Turee/si/pkg/version.Commit=$COMMIT' -X 'github.com/Turee/si/pkg/version.BuildDate=$BUILD_DATE'" -o "bin/si_v${VERSION}_linux_amd64" ./cmd/si
+
+          # macOS amd64
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-X 'github.com/Turee/si/pkg/version.Version=$VERSION' -X 'github.com/Turee/si/pkg/version.Commit=$COMMIT' -X 'github.com/Turee/si/pkg/version.BuildDate=$BUILD_DATE'" -o "bin/si_v${VERSION}_darwin_amd64" ./cmd/si
+
+          # macOS arm64
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-X 'github.com/Turee/si/pkg/version.Version=$VERSION' -X 'github.com/Turee/si/pkg/version.Commit=$COMMIT' -X 'github.com/Turee/si/pkg/version.BuildDate=$BUILD_DATE'" -o "bin/si_v${VERSION}_darwin_arm64" ./cmd/si
+
+          # Windows amd64
+          GOOS=windows GOARCH=amd64 go build -ldflags="-X 'github.com/Turee/si/pkg/version.Version=$VERSION' -X 'github.com/Turee/si/pkg/version.Commit=$COMMIT' -X 'github.com/Turee/si/pkg/version.BuildDate=$BUILD_DATE'" -o "bin/si_v${VERSION}_windows_amd64.exe" ./cmd/si
+
+          chmod +x bin/*
+          EOF
+          chmod +x scripts/prepare-release.sh
+
+      - name: Create publish-release script
+        run: |
+          cat > scripts/publish-release.sh << 'EOF'
+          #!/bin/bash
+          set -e
+
+          echo "Release version $VERSION published successfully!"
+          # Add any additional publishing steps here (e.g., Docker Hub, package repositories)
+          EOF
+          chmod +x scripts/publish-release.sh
+
+      - name: Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: semantic-release

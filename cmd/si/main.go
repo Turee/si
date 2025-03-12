@@ -9,6 +9,7 @@ import (
 
 	"github.com/Turee/si/pkg/config"
 	"github.com/Turee/si/pkg/llm"
+	"github.com/Turee/si/pkg/version"
 	"github.com/alecthomas/kong"
 )
 
@@ -45,7 +46,7 @@ func main() {
 
 	// Handle version flag
 	if CLI.Version {
-		fmt.Println("si version 0.1.0")
+		fmt.Println("si version", version.Info())
 		return
 	}
 
@@ -149,7 +150,7 @@ func handleQuestion(cfg *config.Config, question []string, stdinContent string) 
 		// Ask the question
 		answer, err := provider.Ask(context.Background(), questionStr)
 		if err != nil {
-		
+
 			return fmt.Errorf("error asking question: %w", err)
 		}
 
@@ -167,7 +168,7 @@ func handleQuestion(cfg *config.Config, question []string, stdinContent string) 
 	})
 
 	if err != nil {
-	
+
 		return fmt.Errorf("error asking question: %w", err)
 	}
 

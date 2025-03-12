@@ -122,3 +122,68 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 - Built with [Kong CLI](https://github.com/alecthomas/kong)
 - Supports OpenAI and Azure OpenAI APIs
+
+## Release Process
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) and [Semantic Versioning](https://semver.org/) for automated releases. The release process is fully automated through GitHub Actions.
+
+### How It Works
+
+1. When code is pushed to the `main` branch, the release workflow automatically:
+   - Builds and tests the code
+   - Analyzes commit messages since the last release
+   - Determines the next version number
+   - Generates a changelog
+   - Creates a GitHub release with binary assets
+   - Updates version references in the codebase
+
+### Conventional Commits
+
+To ensure the automated release process works correctly, commit messages should follow the Conventional Commits format:
+
+```
+<type>[(optional scope)]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+Where `type` is one of:
+
+- `feat`: A new feature (triggers a MINOR version bump)
+- `fix`: A bug fix (triggers a PATCH version bump)
+- `docs`: Documentation changes only
+- `style`: Changes that don't affect the code's meaning (whitespace, formatting, etc.)
+- `refactor`: Code changes that neither fix a bug nor add a feature
+- `perf`: Performance improvements
+- `test`: Adding or correcting tests
+- `chore`: Changes to the build process or auxiliary tools
+
+Breaking changes should be indicated with a `!` after the type/scope or with a footer `BREAKING CHANGE:`:
+
+```
+feat!: remove deprecated API
+```
+
+or
+
+```
+feat: add new API
+
+BREAKING CHANGE: previous API has been removed
+```
+
+Breaking changes trigger a MAJOR version bump.
+
+### Example Commits
+
+```
+feat(api): add user authentication
+fix(ui): resolve button alignment in dark mode
+docs: update installation instructions
+chore: update dependency versions
+feat!: redesign user interface
+```
+
+For more detailed information, see the [Conventional Commits specification](https://www.conventionalcommits.org/).
