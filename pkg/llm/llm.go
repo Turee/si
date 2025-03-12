@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,9 +11,6 @@ import (
 
 	"github.com/Turee/si/pkg/config"
 )
-
-// ErrNotImplemented is returned when a feature is not yet implemented
-var ErrNotImplemented = errors.New("not implemented")
 
 // Provider defines the interface for LLM providers
 type Provider interface {
@@ -25,8 +21,15 @@ type Provider interface {
 	AskStream(ctx context.Context, question string, callback func(chunk string) error) error
 }
 
+// ProviderFactory is a function type that creates a Provider from a config
+type ProviderFactory func(cfg *config.Config) (Provider, error)
+
 // NewProvider creates a new LLM provider based on the configuration
-func NewProvider(cfg *config.Config) (Provider, error) {
+// This is a variable function so it can be replaced in tests
+var NewProvider ProviderFactory = newProvider
+
+// newProvider is the actual implementation of NewProvider
+func newProvider(cfg *config.Config) (Provider, error) {
 	// For now, we only support OpenAI
 	return NewOpenAIProvider(&cfg.LLM.OpenAI)
 }

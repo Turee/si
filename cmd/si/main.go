@@ -149,9 +149,7 @@ func handleQuestion(cfg *config.Config, question []string, stdinContent string) 
 		// Ask the question
 		answer, err := provider.Ask(context.Background(), questionStr)
 		if err != nil {
-			if err == llm.ErrNotImplemented {
-				return fmt.Errorf("this feature is not yet implemented")
-			}
+		
 			return fmt.Errorf("error asking question: %w", err)
 		}
 
@@ -169,9 +167,7 @@ func handleQuestion(cfg *config.Config, question []string, stdinContent string) 
 	})
 
 	if err != nil {
-		if err == llm.ErrNotImplemented {
-			return fmt.Errorf("this feature is not yet implemented")
-		}
+	
 		return fmt.Errorf("error asking question: %w", err)
 	}
 
