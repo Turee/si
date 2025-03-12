@@ -127,6 +127,10 @@ func (p *openAIProvider) AskStream(ctx context.Context, question string, callbac
 		Model: model,
 		Messages: []message{
 			{
+				Role:    "system",
+				Content: "You are an AI assistant being used from a terminal. Provide concise, direct responses optimized for command-line viewing. Prioritize brevity and clarity. Use markdown formatting when helpful for readability. Avoid unnecessary pleasantries or verbose explanations unless specifically requested.",
+			},
+			{
 				Role:    "user",
 				Content: question,
 			},
