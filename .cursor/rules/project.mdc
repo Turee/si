@@ -1,0 +1,6 @@
+---
+description: Project specific rules
+globs: 
+alwaysApply: true
+---
+All features are described in the [requirements.md](mdc:requirements.md) we are using golang version 1.23. 
