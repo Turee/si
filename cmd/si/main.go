@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -25,6 +26,8 @@ var CLI struct {
 var (
 	osExit         = os.Exit
 	loadConfigFunc = config.LoadConfig
+	stdinStat      = os.Stdin.Stat
+	stdinRead      = func() ([]byte, error) { return io.ReadAll(os.Stdin) }
 )
 
 func main() {
@@ -46,8 +49,15 @@ func main() {
 		return
 	}
 
-	// If no question is provided, show help
-	if len(CLI.Question) == 0 {
+	// Check if we have data from stdin
+	stdinContent, err := checkStdin()
+	if err != nil {
+		fmt.Printf("Error reading from stdin: %v\n", err)
+		osExit(1)
+	}
+
+	// If no question is provided and no stdin content, show help
+	if len(CLI.Question) == 0 && stdinContent == "" {
 		kongCtx.PrintUsage(false)
 		return
 	}
@@ -86,14 +96,34 @@ func main() {
 		osExit(1)
 	}
 
-	// Handle the question
-	if err := handleQuestion(cfg, CLI.Question); err != nil {
+	// Process the question with stdin content if available
+	if err := handleQuestion(cfg, CLI.Question, stdinContent); err != nil {
 		fmt.Printf("Error: %v\n", err)
 		osExit(1)
 	}
 }
 
-func handleQuestion(cfg *config.Config, question []string) error {
+// checkStdin checks if there is input from stdin and reads it
+func checkStdin() (string, error) {
+	stat, err := stdinStat()
+	if err != nil {
+		return "", fmt.Errorf("error checking stdin: %w", err)
+	}
+
+	// Check if there is data piped in
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		// Read from stdin
+		data, err := stdinRead()
+		if err != nil {
+			return "", fmt.Errorf("error reading from stdin: %w", err)
+		}
+		return string(data), nil
+	}
+
+	return "", nil
+}
+
+func handleQuestion(cfg *config.Config, question []string, stdinContent string) error {
 	// Create LLM provider
 	provider, err := llm.NewProvider(cfg)
 	if err != nil {
@@ -102,6 +132,17 @@ func handleQuestion(cfg *config.Config, question []string) error {
 
 	// Join all question parts into a single string
 	questionStr := strings.Join(question, " ")
+
+	// If we have content from stdin, add it to the question
+	if stdinContent != "" {
+		if questionStr == "" {
+			// If no question was provided, use the stdin content as the question
+			questionStr = stdinContent
+		} else {
+			// Otherwise, append the stdin content to the question
+			questionStr = fmt.Sprintf("%s\n\nContext:\n%s", questionStr, stdinContent)
+		}
+	}
 
 	// If streaming is disabled, use the non-streaming API
 	if CLI.NoStream {
