@@ -63,6 +63,7 @@ func main() {
 			fmt.Println("  openai:")
 			fmt.Println("    base_url: https://api.openai.com/v1")
 			fmt.Println("    api_key: your-api-key")
+			fmt.Println("    model_name: gpt-4")
 			fmt.Println("    azure_deployment_name: optional-azure-deployment-name")
 			fmt.Println("```")
 			osExit(1)

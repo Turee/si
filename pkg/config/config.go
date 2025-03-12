@@ -22,6 +22,7 @@ type LLMConfig struct {
 type OpenAIConfig struct {
 	BaseURL             string `yaml:"base_url"`
 	APIKey              string `yaml:"api_key"`
+	ModelName           string `yaml:"model_name,omitempty"`
 	AzureDeploymentName string `yaml:"azure_deployment_name,omitempty"`
 }
 
